@@ -1,10 +1,12 @@
+import smtplib
+import time
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from auth.jwtbearer import JWTBearer
 from ..config.database import connection
 from ..models.persistence import contacts
-from ..schemas.Contact import ContactResponse
+from ..schemas.Contact import ContactResponse, EmailSender
 from sqlalchemy import text
 from decouple import config
 from bs4 import BeautifulSoup
@@ -104,3 +106,44 @@ async def search_contact(request: ContactResponse):
                 save_to_database(contact_info)
     
     return {"msg": "Contact info saved to DB"}
+
+def send_email(sendto, subject, text, credentials):
+    for i in range(3):
+        try:
+            for credential in credentials:
+                username, password = credential.email, credential.password
+                print(f"Sending Email to {sendto} using {username} (trial {i+1})...")
+                server = smtplib.SMTP('smtp.gmail.com', 587)
+                server.starttls()
+                server.login(username, password)
+                msg = f'Subject: {subject}\n\n{text}'
+                server.sendmail(username, sendto, msg)
+                server.quit()
+                print("Email sent!")
+                time.sleep(10)
+                return
+        except Exception as e:
+            print("Failed to send email due to Exception:")
+            print(e)
+            
+def get_emails_from_db():
+    try:
+        emails = connection.execute("SELECT emails FROM contacts")
+        return [email[0] for email in emails]
+    except Exception as err:
+        print(f"Error: {err}")
+        
+@contact.post('/send_email', dependencies=[Depends(JWTBearer())])
+async def send_email_to_contacts(request: EmailSender):
+    subject = request.subject
+    message = request.message
+    credentials = request.credentials
+    print(credentials)
+    emails = get_emails_from_db()
+    
+    for index, email in enumerate(emails):
+        credential_index = index % len(credentials)
+        print([credentials[credential_index]])
+        send_email(email, subject, message, [credentials[credential_index]])
+    
+    return {"msg": "Emails sent successfully"}
