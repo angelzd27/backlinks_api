@@ -8,3 +8,7 @@ class Contact(BaseModel):
     phones: str
     company_name: str
     created_at: datetime | None
+    
+class ContactResponse(BaseModel):
+    keyword: str
+    number_of_pages: int
