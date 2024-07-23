@@ -57,14 +57,17 @@ async def make_contacts(request: CommentRequest):
                     parent.click()  # Hacer clic en el enlace
                     time.sleep(2)  # Esperar que se cargue la página
 
-                    # Busca el formulario de comentarios por clase o id
+                    # Busca el formulario de comentarios por clase, id o nombre
                     try:
                         comment_form = driver.find_element(By.CLASS_NAME, "comment-form")
                     except:
                         try:
                             comment_form = driver.find_element(By.ID, "commentform")
                         except:
-                            comment_form = None
+                            try:
+                                comment_form = driver.find_element(By.CLASS_NAME, "c-form")
+                            except:
+                                comment_form = None
 
                     if comment_form:
                         # Encuentra todos los campos dentro del formulario de comentarios
