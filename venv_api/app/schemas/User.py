@@ -6,6 +6,7 @@ class User(BaseModel):
     last_name: str
     email: str
     password: str
+    id_profile: int
     status: int | None
     
 class UserLoginSchema(BaseModel):

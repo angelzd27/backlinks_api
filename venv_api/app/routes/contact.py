@@ -85,8 +85,6 @@ def save_to_database(contact_info):
                 print(f"Contact info saved to DB for URL: {contact_info['url']}")
             else:
                 print(f"URL ya existe en la base de datos: {contact_info['url']}")
-
-            connection.close()
         else:
             print(f"No se guardó en la base de datos debido a información incompleta para URL: {contact_info['url']}")
     except Exception as err:
@@ -147,3 +145,21 @@ async def send_email_to_contacts(request: EmailSender):
         send_email(email, subject, message, [credentials[credential_index]])
     
     return {"msg": "Emails sent successfully"}
+
+@contact.get('/get_contacts', dependencies=[Depends(JWTBearer())])
+async def get_contacts():
+    result = connection.execute("SELECT * FROM contacts").fetchall()
+    if result == None:
+        return {'error': True, 'msg': 'There are not contacts'}
+    return {"error": False, 'msg':result}
+
+@contact.get('/get_contact_by_id/{id}', dependencies=[Depends(JWTBearer())])
+async def get_contact_by_id(id):
+    result = connection.execute(contacts.select().where(contacts.c.id == id)).first()
+    if result != None:
+        _status = status.HTTP_200_OK
+        return {"error":False,"msg":result}
+    _status = status.HTTP_404_NOT_FOUND
+
+    result = {"error":True,"msg":"contact not found"}
+    return JSONResponse(status_code=_status, content=result)

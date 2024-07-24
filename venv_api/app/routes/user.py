@@ -73,12 +73,13 @@ def id_generator():
 async def create_user(user: User):
     try:
         new_password = generate_password_hash(user.password, "pbkdf2", 30)
-        query = text('INSERT INTO `users`(`name`, `last_name`, `email`, `password`) VALUES (:name, :last_name, :email, :password)')
+        query = text('CALL user_register(:name, :last_name, :email, :password, :id_profile)')
         new_user = {
             "name": user.name,
             "last_name" : user.last_name,
             "email": user.email,
             "password": new_password,
+            "id_profile": user.id_profile
         }
         connection.execute(query, new_user)
         return {"error":False,"msg":"User created"}
