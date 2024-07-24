@@ -7,6 +7,7 @@ meta_object.reflect(bind=engine)
 users = meta.tables['users']
 contacts = meta.tables['contacts']
 websites = meta.tables['website']
+configs = meta.tables['config']
 
 if len(meta.sorted_tables) > 0:
     print('Connection to database active.')

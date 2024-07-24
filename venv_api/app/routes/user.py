@@ -34,6 +34,7 @@ async def login(userLogin: UserLoginSchema):
                 "name" : result.name,
                 "last_name": result.last_name,
                 "email" : result.email,
+                "id_profile" : result.id_profile
             }
         token = signJWT(data)
         return { 'error': False, 'msg': 'You are logged!', 'token': token['access_token']}
