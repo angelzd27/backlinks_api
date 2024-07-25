@@ -2,6 +2,9 @@ import smtplib
 import time
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
+from email_validator import validate_email, EmailNotValidError
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from auth.jwtbearer import JWTBearer
 from ..config.database import connection
@@ -39,6 +42,15 @@ def extract_contact_info(url):
         # Buscar correos electrónicos
         emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text)
         
+        # Validar correos electrónicos
+        valid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+                valid_emails.append(email)
+            except EmailNotValidError:
+                continue
+
         # Buscar números de teléfono
         phones = re.findall(r'(\+\d{1,3}\s?\d[\d\s.-]{8,}|\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)', text)
 
@@ -47,12 +59,12 @@ def extract_contact_info(url):
         if domain:
             company_name = domain[0][1]
         else:
-            company_name = "Not Found - 0"
+            company_name = "Not Found"
         
         return {
             "url": url,
-            "emails": emails if emails else ["Not Found - 0"],
-            "phones": phones if phones else ["Not Found - 0"],
+            "emails": valid_emails if valid_emails else ["Not Found"],
+            "phones": phones if phones else ["Not Found"],
             "company_name": company_name
         }
     except requests.exceptions.RequestException:
@@ -67,7 +79,7 @@ def is_social_media(url):
 
 def save_to_database(contact_info):
     try:
-        if (contact_info['emails'] != ["Not Found - 0"]):
+        if (contact_info['emails'] != ["Not Found"]):
 
             # Verificar si la URL ya existe en la base de datos
             check_url_query = "SELECT COUNT(*) FROM contacts WHERE url = %s"
@@ -103,7 +115,7 @@ async def search_contact(request: ContactResponse):
             if contact_info:
                 save_to_database(contact_info)
     
-    return {"msg": "Contact info saved to DB"}
+    return {"error": False, "msg": "Contacts info saved to DB"}
 
 def send_email(sendto, subject, text, credentials):
     for i in range(3):
@@ -111,12 +123,24 @@ def send_email(sendto, subject, text, credentials):
             for credential in credentials:
                 username, password = credential.email, credential.password
                 print(f"Sending Email to {sendto} using {username} (trial {i+1})...")
+
+                msg = MIMEMultipart('alternative')
+                msg['Subject'] = subject
+                msg['From'] = username
+                msg['To'] = sendto
+
+                part1 = MIMEText(text, 'plain')
+                part2 = MIMEText(text, 'html')
+
+                msg.attach(part1)
+                msg.attach(part2)
+
                 server = smtplib.SMTP('smtp.gmail.com', 587)
                 server.starttls()
                 server.login(username, password)
-                msg = f'Subject: {subject}\n\n{text}'
-                server.sendmail(username, sendto, msg)
+                server.sendmail(username, sendto, msg.as_string())
                 server.quit()
+                
                 print("Email sent!")
                 time.sleep(10)
                 return
@@ -144,7 +168,7 @@ async def send_email_to_contacts(request: EmailSender):
         print([credentials[credential_index]])
         send_email(email, subject, message, [credentials[credential_index]])
     
-    return {"msg": "Emails sent successfully"}
+    return {"error": False, "msg": "Emails sent successfully"}
 
 @contact.get('/get_contacts', dependencies=[Depends(JWTBearer())])
 async def get_contacts():
@@ -163,3 +187,13 @@ async def get_contact_by_id(id):
 
     result = {"error":True,"msg":"contact not found"}
     return JSONResponse(status_code=_status, content=result)
+
+@contact.delete('/delete_contact/{id}', dependencies=[Depends(JWTBearer())])
+async def delete_contact(id):
+    connection.execute(contacts.delete().where(contacts.c.id == id))
+    return {"error": False, "msg": "Contact deleted successfully"}
+
+@contact.delete('/delete_contacts', dependencies=[Depends(JWTBearer())])
+async def delete_contacts():
+    connection.execute("TRUNCATE TABLE contacts")
+    return {"error": False, "msg": "All contacts deleted successfully"}

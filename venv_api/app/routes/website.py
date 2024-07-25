@@ -108,7 +108,6 @@ async def make_contacts(request: CommentRequest):
                     
                     for comment_url in comment_urls[:2]:  # Solo las primeras 3 URLs
                         try:
-                            print("url de el feed::::::::::::::::::::::" + comment_url)
                             # Navegar a la URL extraída
                             driver.get(comment_url)
                             time.sleep(2)  # Esperar que se cargue la página
@@ -205,3 +204,13 @@ async def get_website_by_id(id):
 
     result = {"error":True,"msg":"Website not found"}
     return JSONResponse(status_code=_status, content=result)
+
+@website.delete('/delete_website/{id}', dependencies=[Depends(JWTBearer())])
+async def delete_website(id):
+    connection.execute(websites.delete().where(websites.c.id == id))
+    return {"error": False, "msg": "Website deleted successfully"}
+
+@website.delete('/delete_websites', dependencies=[Depends(JWTBearer())])
+async def delete_websites():
+    connection.execute("TRUNCATE TABLE website")
+    return {"error": False, "msg": "All websites deleted successfully"}
