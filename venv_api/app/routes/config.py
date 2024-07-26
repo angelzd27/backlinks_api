@@ -38,3 +38,19 @@ async def create_config(request: Emails):
         _status = status.HTTP_500_INTERNAL_SERVER_ERROR
         result = {"error": True, "err_code":exc.orig.args[0], "msg":"There's an error: " + exc.orig.args[1]}
         return JSONResponse(status_code=_status, content=result)
+    
+@config.post("/edit_email", dependencies=[Depends(JWTBearer())])
+async def edit_email(request: Emails):
+    try:
+        query = text("UPDATE emails SET email = :email, password = :password WHERE id = :id")
+        edit_email = {
+            "id": request.id,
+            "email": request.email,
+            "password": request.password
+        }
+        connection.execute(query, edit_email)
+        return {"error": False, 'msg': 'Email edited'}
+    except IntegrityError as exc:
+        _status = status.HTTP_500_INTERNAL_SERVER_ERROR
+        result = {"error": True, "err_code":exc.orig.args[0], "msg":"There's an error: " + exc.orig.args[1]}
+        return JSONResponse(status_code=_status, content=result)

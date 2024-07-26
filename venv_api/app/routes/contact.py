@@ -48,11 +48,14 @@ def extract_contact_info(url):
             try:
                 validate_email(email)
                 valid_emails.append(email)
+                break
             except EmailNotValidError:
                 continue
 
         # Buscar números de teléfono
         phones = re.findall(r'(\+\d{1,3}\s?\d[\d\s.-]{8,}|\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)', text)
+        
+        phone_number = phones[0] if phones else None
 
         # Inferir el nombre de la empresa basado en el dominio
         domain = re.findall(r'https?://(www\.)?([a-zA-Z0-9-]+)\.[a-zA-Z]+', url)
@@ -64,7 +67,7 @@ def extract_contact_info(url):
         return {
             "url": url,
             "emails": valid_emails if valid_emails else ["Not Found"],
-            "phones": phones if phones else ["Not Found"],
+            "phones": phone_number if phone_number else ["Not Found"],
             "company_name": company_name
         }
     except requests.exceptions.RequestException:
