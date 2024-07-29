@@ -16,7 +16,7 @@ config = APIRouter(tags=['config'])
 
 @config.get("/get_config/{id}", dependencies=[Depends(JWTBearer())])
 async def get_config(id):
-    query = text("SELECT c.id, c.pages_number, c.contact_number, c.author, c.email AS config_email, c.url, c.comment, c.subject, c.message, JSON_ARRAYAGG(JSON_OBJECT('id', e.id, 'email', e.email, 'password', e.password)) AS related_emails FROM config c LEFT JOIN config_emails ce ON c.id = ce.id_config LEFT JOIN emails e ON ce.id_emails = e.id WHERE c.id = :id_config GROUP BY c.id")
+    query = text("SELECT c.id, c.pages_number, c.contact_number, c.author, c.email AS config_email, c.url, c.comment, c.subject, c.message, JSON_ARRAYAGG(JSON_OBJECT('id', e.id, 'email', e.email, 'password', e.password)) AS related_emails FROM config c LEFT JOIN config_emails ce ON c.id = ce.id_config LEFT JOIN emails e ON ce.id_emails = e.id AND e.status = 1 WHERE c.id = :id_config GROUP BY c.id")
     id_config = {
         "id_config": id
     }
@@ -30,10 +30,33 @@ async def create_config(request: Emails):
         new_email = {
             "id_config": request.id,
             "email": request.email,
-            "password": request.password
+            "password": request.password,
+            "status": request.status,
         }
         connection.execute(query, new_email)
         return {"error": False, 'msg': 'Email created'}
+    except IntegrityError as exc:
+        _status = status.HTTP_500_INTERNAL_SERVER_ERROR
+        result = {"error": True, "err_code":exc.orig.args[0], "msg":"There's an error: " + exc.orig.args[1]}
+        return JSONResponse(status_code=_status, content=result)
+    
+@config.post("/edit_config", dependencies=[Depends(JWTBearer())])
+async def edit_config(request: Config):
+    try:
+        query = text("UPDATE config SET pages_number = :pages_number, contact_number = :contacts_number, author = :author, email = :email, url = :url, comment = :comment, subject = :subject, message = :message WHERE id = :id")
+        edit_config = {
+            "id": request.id,
+            "pages_number": request.pages_number,
+            "contacts_number": request.contacts_number,
+            "author": request.author,
+            "email": request.email,
+            "url": request.url,
+            "comment": request.comment,
+            "subject": request.subject,
+            "message": request.message
+        }
+        connection.execute(query, edit_config)
+        return {"error": False, 'msg': 'Configuration edited'}
     except IntegrityError as exc:
         _status = status.HTTP_500_INTERNAL_SERVER_ERROR
         result = {"error": True, "err_code":exc.orig.args[0], "msg":"There's an error: " + exc.orig.args[1]}
@@ -54,3 +77,18 @@ async def edit_email(request: Emails):
         _status = status.HTTP_500_INTERNAL_SERVER_ERROR
         result = {"error": True, "err_code":exc.orig.args[0], "msg":"There's an error: " + exc.orig.args[1]}
         return JSONResponse(status_code=_status, content=result)
+    
+@config.delete("/delete_email/{id}", dependencies=[Depends(JWTBearer())])
+async def delete_email(id):
+    try:
+        query = text("UPDATE emails SET status=0 WHERE id = :id")
+        id_email = {
+            "id": id
+        }
+        connection.execute(query, id_email)
+        return {"error": False, 'msg': 'Email deleted'}
+    except IntegrityError as exc:
+        _status = status.HTTP_500_INTERNAL_SERVER_ERROR
+        result = {"error": True, "err_code":exc.orig.args[0], "msg":"There's an error: " + exc.orig.args[1]}
+        return JSONResponse(status_code=_status, content=result)
+    
