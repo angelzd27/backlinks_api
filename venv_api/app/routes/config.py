@@ -16,7 +16,7 @@ config = APIRouter(tags=['config'])
 
 @config.get("/get_config/{id}", dependencies=[Depends(JWTBearer())])
 async def get_config(id):
-    query = text("SELECT c.id, c.pages_number, c.contact_number, c.author, c.email AS config_email, c.url, c.comment, c.subject, c.message, JSON_ARRAYAGG(JSON_OBJECT('id', e.id, 'email', e.email, 'password', e.password)) AS related_emails FROM config c LEFT JOIN config_emails ce ON c.id = ce.id_config LEFT JOIN emails e ON ce.id_emails = e.id AND e.status = 1 WHERE c.id = :id_config GROUP BY c.id")
+    query = text("SELECT c.id, c.pages_number, c.contact_number, c.author, c.email AS config_email, c.url, c.comment, c.subject, c.message, IFNULL( ( SELECT JSON_ARRAYAGG(JSON_OBJECT('id', e.id, 'email', e.email, 'password', e.password)) FROM emails e JOIN config_emails ce ON ce.id_emails = e.id WHERE ce.id_config = c.id AND e.status = 1 ), JSON_ARRAY() ) AS related_emails FROM config c WHERE c.id = :id_config GROUP BY c.id")
     id_config = {
         "id_config": id
     }

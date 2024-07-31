@@ -1,5 +1,6 @@
 import smtplib
 import time
+import random
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from email_validator import validate_email, EmailNotValidError
@@ -20,6 +21,13 @@ contact = APIRouter(tags=['contact'])
 
 API_KEY = config("api_key")
 CSE_ID = config("cse_id")
+proxies = [
+    'http://104.248.63.17:80',
+    'http://167.71.5.83:8080',
+    'http://138.68.24.145:8080',
+    'http://178.62.193.19:8080',
+    'http://159.89.132.35:8080',
+]
 
 def google_search(query, api_key, cse_id, num_results=10, **kwargs):
     url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={cse_id}"
@@ -120,10 +128,22 @@ async def search_contact(request: ContactResponse):
     
     return {"error": False, "msg": "Contacts info saved to DB"}
 
+def get_random_proxy():
+    return random.choice(proxies)
+
 def send_email(sendto, subject, text, credentials):
     for i in range(3):
         try:
             for credential in credentials:
+                proxy = get_random_proxy()
+                print(f"Changing IP using proxy {proxy}...")
+
+                # Configura el proxy en el servidor SMTP
+                proxy_dict = {
+                    "http": proxy,
+                    "https": proxy,
+                }
+
                 username, password = credential.email, credential.password
                 print(f"Sending Email to {sendto} using {username} (trial {i+1})...")
 
@@ -140,10 +160,16 @@ def send_email(sendto, subject, text, credentials):
 
                 server = smtplib.SMTP('smtp.gmail.com', 587)
                 server.starttls()
+
+                # Configura el proxy para el servidor SMTP
+                server.ehlo()
+                server.esmtp_features['proxy'] = 'on'
+                server.esmtp_features['proxy_host'] = proxy
+
                 server.login(username, password)
                 server.sendmail(username, sendto, msg.as_string())
                 server.quit()
-                
+
                 print("Email sent!")
                 time.sleep(10)
                 return
