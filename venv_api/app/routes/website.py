@@ -72,7 +72,7 @@ async def make_contacts(request: CommentRequest):
     driver = webdriver.Chrome()
     search_url = "https://www.google.com"
     driver.get(search_url)
-    count = 0
+    pageCommented = False
 
     # Buscar la palabra clave en Google
     search_box = driver.find_element(By.NAME, "q")
@@ -156,10 +156,11 @@ async def make_contacts(request: CommentRequest):
                                     # submit_button.click()
                                     print(f"Comentario enviado en la página: {driver.current_url}")
                                     add_url_to_db(comment_url, 1)
-                                    count = 1
+                                    pageCommented = True
                                 else:
                                     print("No se encontró un botón de submit en la página actual.")
                                     add_url_to_db(comment_url, 0)
+                                    pageCommented = True
                             else:
                                 print("No se encontró un formulario de comentarios en la página actual.")
                                 add_url_to_db(comment_url, 0)
@@ -169,11 +170,12 @@ async def make_contacts(request: CommentRequest):
                     # Volver a la página de resultados de búsqueda
                     driver.back()
                     driver.back()
-                    if count == 1:
+                    driver.back()
+                    if pageCommented == True:
                         driver.back()
                         
                     time.sleep(2)  # Esperar que se cargue la página de resultados
-                    count = 0
+                    pageCommented = False
 
                 except Exception as e:
                     print("Error al acceder al link:", str(e))
