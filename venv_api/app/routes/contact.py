@@ -30,10 +30,24 @@ proxies = [
 ]
 
 def google_search(query, api_key, cse_id, num_results=10, **kwargs):
-    url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={cse_id}"
-    params = {'num': num_results, **kwargs}
-    response = requests.get(url, params=params)
-    return response.json()
+    results = []
+    start_index = 1  # Índice inicial para las búsquedas, Google Custom Search API usa 1-based indexing
+    
+    while len(results) < num_results:
+        num = min(10, num_results - len(results))  # Limita la cantidad de resultados a 10 por solicitud
+        url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={cse_id}&start={start_index}&num={num}"
+        params = kwargs
+        response = requests.get(url, params=params)
+        data = response.json()
+        
+        if 'items' in data:
+            results.extend(data['items'])
+        else:
+            break  # Si no hay más resultados, salir del bucle
+        
+        start_index += 10  # Incrementar el índice inicial para la siguiente solicitud
+    
+    return {'items': results}
 
 def extract_contact_info(url):
     try:
@@ -62,8 +76,6 @@ def extract_contact_info(url):
 
         # Buscar números de teléfono
         phones = re.findall(r'(\+\d{1,3}\s?\d[\d\s.-]{8,}|\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b)', text)
-        
-        phone_number = phones[0] if phones else None
 
         # Inferir el nombre de la empresa basado en el dominio
         domain = re.findall(r'https?://(www\.)?([a-zA-Z0-9-]+)\.[a-zA-Z]+', url)
@@ -75,7 +87,7 @@ def extract_contact_info(url):
         return {
             "url": url,
             "emails": valid_emails if valid_emails else ["Not Found"],
-            "phones": phone_number if phone_number else ["Not Found"],
+            "phones": phones if phones else ["Not Found"],
             "company_name": company_name
         }
     except requests.exceptions.RequestException:
