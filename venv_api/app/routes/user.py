@@ -22,8 +22,6 @@ user = APIRouter(tags=['users'])
 async def login(userLogin: UserLoginSchema):
     
     result = connection.execute(users.select().where(users.c.email == userLogin.email)).first()
-    
-    print(result)
 
     if result == None:
         return {'error': True, 'msg': 'Not Logged'}

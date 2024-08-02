@@ -72,14 +72,15 @@ async def make_contacts(request: CommentRequest):
     driver = webdriver.Chrome()
     search_url = "https://www.google.com"
     driver.get(search_url)
-    pageCommented = False
 
-    # Buscar la palabra clave en Google
+    # Realizar la búsqueda en Google
     search_box = driver.find_element(By.NAME, "q")
     search_box.send_keys(keyword)
     search_box.send_keys(Keys.RETURN)
 
     time.sleep(2)  # Esperar que se carguen los resultados
+
+    social_media_domains = ["facebook.com", "instagram.com", "pinterest.com", "twitter.com", "reddit.com", "youtube.com", "mercadolibre.com", "booking.com", "expedia.com", "tripadvisor.com", "yelp.com", "linkedin.com", "tiktok.com", "whatsapp.com", "telegram.com", "snapchat.com", "tumblr.com", "flickr.com", "vimeo.com", "soundcloud.com", "spotify.com", "pandora.com", "last.fm" "bandcamp.com", "mixcloud.com", "reverbnation.com", "behance.net", "dribbble.com", "deviantart.com", "fiverr.com", "upwork.com", "freelancer.com", "patreon.com", "onlyfans.com", "ko-fi.com", "buymeacoffee.com", "paypal.com", "cash.app", "venmo.com", "stripe.com", "square.com", "skrill.com", "neteller.com", "payoneer.com", "transferwise.com", "wise.com", "revolut.com", "n26.com", "chime.com", "simple.com", "ally.com", "sofi.com", "varo.com", "aspiration.com", "acorns.com", "robinhood.com", "webull.com", "m1finance.com", "public.com", "stake.com", "e-toro.com", "coinbase.com", "binance.com", "kraken.com", "amazon.com", "ebay.com", "etsy.com", "aliexpress.com", "alibaba.com", "dhgate.com", "wish.com", "bodegaaurrera.com", "wikipedia.com", "adobe.com", "github.com", "apps.apple.com", "play.google.com"]
 
     for page in range(pages_to_search):
         # Iterar sobre los resultados de búsqueda
@@ -89,6 +90,13 @@ async def make_contacts(request: CommentRequest):
             parent = results[page].find_element(By.XPATH, '..')  # Obtener el elemento padre
             if parent.tag_name == 'a':  # Comprobar si el padre es un enlace
                 url = parent.get_attribute('href')
+
+                # Verificar si la URL es de una red social
+                if any(domain in url for domain in social_media_domains):
+                    print("Se omitió red social:", url)
+                    continue
+
+                # Verificar si la URL ya existe en la base de datos
                 if check_url_in_db(url):
                     print("URL ya existente:", url)
                     continue
@@ -96,86 +104,125 @@ async def make_contacts(request: CommentRequest):
                 try:
                     parent.click()  # Hacer clic en el enlace
                     time.sleep(2)  # Esperar que se cargue la página
-                    current_url = driver.current_url
 
-                    # Navegar a la URL + /feed
-                    feed_url = current_url + "/feed"
-                    driver.get(feed_url)
-                    time.sleep(5)  # Esperar que se cargue la página
+                    # Verificar si la página tiene una sección de comentarios
+                    comment_section_found = False
+                    comment_form = None
 
-                    # Buscar la etiqueta <comments>
-                    comment_urls = extract_comments_from_feed(feed_url)
-                    
-                    for comment_url in comment_urls[:2]:  # Solo las primeras 3 URLs
+                    selectors = [
+                        (By.CLASS_NAME, "comment-form"),
+                        (By.ID, "commentform"),
+                        (By.ID, "comments"),
+                        (By.CLASS_NAME, "c-form"),
+                        (By.CLASS_NAME, "comments"),
+                        (By.CLASS_NAME, "comments-area")
+                    ]
+
+                    for selector in selectors:
                         try:
-                            # Navegar a la URL extraída
-                            driver.get(comment_url)
-                            time.sleep(2)  # Esperar que se cargue la página
+                            comment_form = driver.find_element(*selector)
+                            comment_section_found = True
+                            break
+                        except:
+                            continue
 
-                            # Busca el formulario de comentarios por clase, id o nombre
-                            comment_form = None
+                    if comment_section_found:
+                        # Encuentra todos los campos dentro del formulario de comentarios
+                        input_fields = comment_form.find_elements(By.TAG_NAME, "input")
+                        textarea_fields = comment_form.find_elements(By.TAG_NAME, "textarea")
 
-                            selectors = [
-                                (By.CLASS_NAME, "comment-form"),
-                                (By.ID, "commentform"),
-                                (By.ID, "comments"),
-                                (By.CLASS_NAME, "c-form"),
-                                (By.CLASS_NAME, "comments"),
-                                (By.CLASS_NAME, "comments-area")
-                            ]
+                        # Rellenar los campos del formulario
+                        for field in input_fields:
+                            field_name = field.get_attribute('name')
+                            if field_name == "author":
+                                field.send_keys(author)
+                            elif field_name == "email":
+                                field.send_keys(email)
+                            elif field_name == "url":
+                                field.send_keys(website_url)
 
-                            for selector in selectors:
+                        for field in textarea_fields:
+                            if field.get_attribute('name') == "comment":
+                                field.send_keys(comment_text)
+
+                        submit_button = find_submit_button(comment_form)
+
+                        if submit_button:
+                            # submit_button.click()
+                            print(f"Comentario enviado en la página: {driver.current_url}")
+                            add_url_to_db(driver.current_url, 1)
+                        else:
+                            print("No se encontró un botón de submit en la página actual.")
+                            add_url_to_db(driver.current_url, 0)
+                    else:
+                        # Verificar si la página es un sitio de WordPress
+                        if "wp-content" in driver.page_source:
+                            current_url = driver.current_url
+
+                            # Navegar a la URL + /feed
+                            feed_url = current_url + "/feed"
+                            driver.get(feed_url)
+                            time.sleep(5)  # Esperar que se cargue la página
+
+                            # Buscar la etiqueta <comments>
+                            comment_urls = extract_comments_from_feed(feed_url)
+                            
+                            for comment_url in comment_urls[:2]:  # Solo las primeras 2 URLs
                                 try:
-                                    comment_form = driver.find_element(*selector)
-                                    break
-                                except:
-                                    continue
+                                    # Navegar a la URL extraída
+                                    driver.get(comment_url)
+                                    time.sleep(2)  # Esperar que se cargue la página
 
-                            if comment_form:
-                                # Encuentra todos los campos dentro del formulario de comentarios
-                                input_fields = comment_form.find_elements(By.TAG_NAME, "input")
-                                textarea_fields = comment_form.find_elements(By.TAG_NAME, "textarea")
+                                    # Busca el formulario de comentarios por clase, id o nombre
+                                    comment_form = None
 
-                                # Rellenar los campos del formulario
-                                for field in input_fields:
-                                    field_name = field.get_attribute('name')
-                                    if field_name == "author":
-                                        field.send_keys(author)
-                                    elif field_name == "email":
-                                        field.send_keys(email)
-                                    elif field_name == "url":
-                                        field.send_keys(website_url)
+                                    for selector in selectors:
+                                        try:
+                                            comment_form = driver.find_element(*selector)
+                                            break
+                                        except:
+                                            continue
 
-                                for field in textarea_fields:
-                                    if field.get_attribute('name') == "comment":
-                                        field.send_keys(comment_text)
+                                    if comment_form:
+                                        # Encuentra todos los campos dentro del formulario de comentarios
+                                        input_fields = comment_form.find_elements(By.TAG_NAME, "input")
+                                        textarea_fields = comment_form.find_elements(By.TAG_NAME, "textarea")
 
-                                submit_button = find_submit_button(comment_form)
+                                        # Rellenar los campos del formulario
+                                        for field in input_fields:
+                                            field_name = field.get_attribute('name')
+                                            if field_name == "author":
+                                                field.send_keys(author)
+                                            elif field_name == "email":
+                                                field.send_keys(email)
+                                            elif field_name == "url":
+                                                field.send_keys(website_url)
 
-                                if submit_button:
-                                    # submit_button.click()
-                                    print(f"Comentario enviado en la página: {driver.current_url}")
-                                    add_url_to_db(comment_url, 1)
-                                    pageCommented = True
-                                else:
-                                    print("No se encontró un botón de submit en la página actual.")
-                                    add_url_to_db(comment_url, 0)
-                                    pageCommented = True
-                            else:
-                                print("No se encontró un formulario de comentarios en la página actual.")
-                                add_url_to_db(comment_url, 0)
-                        except Exception as e:
-                            print(f"Error al acceder a la URL de comentarios: {comment_url} - {str(e)}")
+                                        for field in textarea_fields:
+                                            if field.get_attribute('name') == "comment":
+                                                field.send_keys(comment_text)
+
+                                        submit_button = find_submit_button(comment_form)
+
+                                        if submit_button:
+                                            # submit_button.click()
+                                            print(f"Comentario enviado en la página: {driver.current_url}")
+                                            add_url_to_db(comment_url, 1)
+                                        else:
+                                            print("No se encontró un botón de submit en la página de comentarios.")
+                                            add_url_to_db(comment_url, 0)
+                                    else:
+                                        print("No se encontró un formulario de comentarios en la página de comentarios.")
+                                        add_url_to_db(comment_url, 0)
+                                except Exception as e:
+                                    print(f"Error al acceder a la URL de comentarios: {comment_url} - {str(e)}")
+                        else:
+                            print("No es una página de WordPress:", driver.current_url)
 
                     # Volver a la página de resultados de búsqueda
-                    driver.back()
-                    driver.back()
-                    driver.back()
-                    if pageCommented == True:
+                    while not driver.current_url.startswith("https://www.google.com"):
                         driver.back()
-                        
-                    time.sleep(2)  # Esperar que se cargue la página de resultados
-                    pageCommented = False
+                        time.sleep(2)  # Esperar que se cargue la página anterior
 
                 except Exception as e:
                     print("Error al acceder al link:", str(e))
@@ -188,6 +235,7 @@ async def make_contacts(request: CommentRequest):
     driver.quit()
 
     return {"error": False, "msg": "Proceso completado"}
+
 
 @website.get('/get_websites', dependencies=[Depends(JWTBearer())])
 async def get_websites():
