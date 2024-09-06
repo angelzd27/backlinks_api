@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 05, 2024 at 11:37 PM
+-- Generation Time: Sep 06, 2024 at 05:14 PM
 -- Server version: 8.0.17
 -- PHP Version: 7.3.10
 
@@ -94,7 +94,7 @@ CREATE TABLE `config` (
 --
 
 INSERT INTO `config` (`id`, `pages_number`, `contact_number`, `author`, `email`, `url`, `comment`, `subject`, `message`) VALUES
-(1, 20, 30, 'Okip', 'comunicacion@okip.com.mx', 'okip.com.mx', 'Holi Crayoli', 'Email subject', 'Message email'),
+(1, 20, 100, 'Okip', 'comunicacion@okip.com.mx', 'okip.com.mx', 'Holi Crayoli', 'Email subject', 'Message email'),
 (2, 10, 10, 'No author assigned', 'No email assigned', 'No url assigned', 'No comment assigned', 'No subject assigned', 'No message assigned');
 
 -- --------------------------------------------------------
@@ -130,42 +130,6 @@ CREATE TABLE `contacts` (
   `company_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `contacts`
---
-
-INSERT INTO `contacts` (`id`, `url`, `emails`, `phones`, `company_name`, `created_at`) VALUES
-(1, 'https://www.usa-droneacademy.com/drones-disponibles/', 'info@usa-droneacademy.com', '+1786 343 7212, 1722141585, 1722141585, 786 343 7212, +1 786 343 7212 \n \n   \n \n', 'usa-droneacademy', '2024-08-02 10:07:02'),
-(2, 'https://dronestoremiami.com/16-drones', 'sales@dronestoremiami.com', '1722614824, 1645841277', 'dronestoremiami', '2024-08-02 10:07:04'),
-(3, 'https://compradron.com/', 'license@prestashop.com', '1722614831, 1673265289', 'compradron', '2024-08-02 10:07:13'),
-(4, 'https://www.dw.com/es/eeuu-autoriza-posible-venta-de-drones-de-combate-y-misiles-a-taiw%C3%A1n/a-69407218', 'feedback.spanish@dw.com', 'Not Found', 'dw', '2024-08-02 10:07:17'),
-(5, 'https://dji.pe/', 'informes.dji@quetalcompra.com', '1652115733, 1666635624, 1722614838, 1722614838', 'dji', '2024-08-02 10:07:18'),
-(6, 'https://droneval.com/', 'ventas@droneval.com', '1722614840', 'droneval', '2024-08-02 10:07:21'),
-(7, 'https://geospectral.com.mx/pages/tienda-de-drones', 'ventas@geospectral.com.mx', '1722614843, 1676048957, 1676048920, 1676048949, 1675981173, 1676048865, 1676048957, 1676048920, 1676', 'geospectral', '2024-08-02 10:07:23'),
-(8, 'https://djistore.com.ar/', 'dji@djistore.com.ar', '1722603481', 'djistore', '2024-08-02 10:07:26'),
-(9, 'https://dukefotografia.com/drones/', 'info@dukefotografia.com', '1722614850, 1722614851, 1496268000, +34 928 268 155 \n ', 'dukefotografia', '2024-08-02 10:07:31'),
-(10, 'https://www.dercocenter.cl/', 'datospersonales@inchcape.cl', '600 600 0080, 600 600 0080, 0000000182, 600 600 0080', 'dercocenter', '2024-08-02 10:08:01'),
-(11, 'https://www.fedpat.com.ar/informacion-util/vehiculos/', 'consultas@ssn.gob.ar', '+5492214290200 \n \n \n \n \n \n ', 'fedpat', '2024-08-02 10:09:09'),
-(12, 'https://maxiautos.co/11-camionetas', 'contacto@maxiautos.co', '1595018258, 1595018258, 1722614987, 3145802658, 3145802658, 3145802658', 'maxiautos', '2024-08-02 10:09:48'),
-(13, 'https://www.booking.com/city/mx/cancun.es.html', 'nombre@ejemplo.com', '1722615044, 1722615044, 1722615044, 1722615044, 1722615044, 2166136261, 8709757556, +1722615044', 'booking', '2024-08-02 10:10:45'),
-(14, 'https://store.emlid.com/products/reachm2', 'info@emlid.com', '1722615124, 1698421175, 1698421175, 1698421175, 1698421175, 1698421175, 1698421175, 1698421175, 1698', 'store', '2024-08-02 10:12:04'),
-(15, 'https://www.autelpilot.com/products/autel-robotics-rtk-module', 'sales@autelpilot.com', '4702470190, 4702470190, 1722615125, 4702470190, 4702470190, 1657703483, 1657703483, 4702470190, 4702', 'autelpilot', '2024-08-02 10:12:05'),
-(16, 'https://www.autelpilot.com/products/autel-evo-max-series-rtk-module', 'sales@autelpilot.com', '4702470190, 4702470190, 1722615126, 4702470190, 4702470190, 1701309079, 1701309079, 4702470190, 4702', 'autelpilot', '2024-08-02 10:12:07'),
-(17, 'https://www.ardusimple.com/product/bluetooth-module/', 'info@ardusimple.com', '2147483647', 'ardusimple', '2024-08-02 10:12:09'),
-(18, 'https://drone-works.com/autel-evo-max-rtk-module/', 'cs@drone-works.com', '607.239.9119, 607.239.9119', 'drone-works', '2024-08-02 10:12:10'),
-(19, 'https://store.beitian.com/collections/rtk-gnss-module', 'sally@beitian.com', '1722615131, 1624956581, 2147483647, 1624956581, 2147483647, 1721975491, 1710141391, 1718691305, 1721', 'store', '2024-08-02 10:12:12'),
-(20, 'https://www.ardusimple.com/product/radio-module-long-range/', 'info@ardusimple.com', '2147483647', 'ardusimple', '2024-08-02 10:12:14'),
-(21, 'https://store.dji.com/product/dji-mavic-3-enterprise-rtk-module', 'support@dji.com', 'Not Found', 'store', '2024-08-02 10:12:15'),
-(22, 'https://www.ardusimple.com/', 'info@ardusimple.com', '2147483647', 'ardusimple', '2024-08-02 10:12:17'),
-(23, 'https://halorobotics.com/v2/product/dji-mavic-3-enterprise-rtk-module/', 'sales@halorobotics.com', '100.2924805, +6281 11909 0099 ', 'halorobotics', '2024-08-02 10:12:18'),
-(24, 'https://witmotion-sensor.com/products/witmotion-gps-rtk-module-um982-high-precision-centimeter-level-differential-relative-positioning-and-orientation-um960', 'samik@wit-motion.com', '1624978055, 1624978055, 1722615139, 1721039449, 1721039463, 1721039478, 1721039496, 1721039510, 1721', 'witmotion-sensor', '2024-08-02 10:12:20'),
-(25, 'https://djiarsmadrid.com/en/mavic-3-enterprsie-/3437-dji-mavic-3-enterprise-rtk-module.html', 'info@djiarsmadrid.com', '1609751180, 1609751180, 1722615143, +34 918 51 20 96  \n \n \n \n \n \n \n ', 'djiarsmadrid', '2024-08-02 10:12:24'),
-(26, 'https://talosdrones.com/products/dji-agras-t40-rtk-antenna-module', 'support@talosdrones.com', '1686303389, 1722615147, 1667579066, 1667579066, 1667579066, 1667579066, +1 800 953 0923 \n \n \n \n \n \n ', 'talosdrones', '2024-08-02 10:12:27'),
-(27, 'https://www.reddit.com/r/UAVmapping/comments/15111hb/dji_air_2s_ppkrtk/', '9f057df6115a4bb488c08ea12a835e6e@o418887.ingest.sentry.io', 'Not Found', 'reddit', '2024-08-02 10:12:29'),
-(28, 'https://www.w3shopping.com/products/dji-rtk-module-price-in-pakistan', 'sales@w3shopping.com', '1929150521, 1929150521, 1722615150, 1684857967, 1929150521, 1929150521, 1684857969, 1685101730, 1684', 'w3shopping', '2024-08-02 10:12:30'),
-(29, 'https://www.heliguy.com/blogs/posts/dji-mavic-3-enterprise-you-guide-to-the-rtk-module', 'info@heliguy.com', '1665564218, 1722615151, 1664288478, 1664288478, 1606216450, 1606216450, 1664280891, 1664280891, 1664', 'heliguy', '2024-08-02 10:12:32'),
-(30, 'https://www.dji.com/d-rtk', '7c77019c2d8f45659f7b801706edf4ef@sentry-io.djiops.com', 'Not Found', 'dji', '2024-08-02 10:12:35');
 
 -- --------------------------------------------------------
 
@@ -329,7 +293,7 @@ ALTER TABLE `config`
 -- AUTO_INCREMENT for table `contacts`
 --
 ALTER TABLE `contacts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `emails`
