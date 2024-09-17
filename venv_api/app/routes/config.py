@@ -15,6 +15,7 @@ from sqlalchemy import text
 config = APIRouter(tags=['config'])
 
 @config.get("/get_config/{id}", dependencies=[Depends(JWTBearer())])
+# Comment Here
 async def get_config(id):
     query = text('''
     SELECT 
