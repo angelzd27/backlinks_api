@@ -15,13 +15,45 @@ from sqlalchemy import text
 config = APIRouter(tags=['config'])
 
 @config.get("/get_config/{id}", dependencies=[Depends(JWTBearer())])
+# Comment Here
 async def get_config(id):
-    query = text("SELECT c.id, c.pages_number, c.contact_number, c.author, c.email AS config_email, c.url, c.comment, c.subject, c.message, IFNULL( ( SELECT JSON_ARRAYAGG(JSON_OBJECT('id', e.id, 'email', e.email, 'password', e.password)) FROM emails e JOIN config_emails ce ON ce.id_emails = e.id WHERE ce.id_config = c.id AND e.status = 1 ), JSON_ARRAY() ) AS related_emails FROM config c WHERE c.id = :id_config GROUP BY c.id")
-    id_config = {
-        "id_config": id
-    }
-    result = connection.execute(query, id_config).fetchall()
-    return {"error": False, 'msg':result}
+    query = text('''
+    SELECT 
+        c.id, 
+        c.pages_number, 
+        c.contact_number, 
+        c.author, 
+        c.email AS config_email, 
+        c.url, 
+        c.comment, 
+        c.subject, 
+        c.message, 
+        IFNULL(
+            (
+                SELECT 
+                    CONCAT('[', 
+                    GROUP_CONCAT(
+                        CONCAT(
+                            '{"id":', e.id, ', "email":"', e.email, '", "password":"', e.password, '"}'
+                        )
+                    ), 
+                    ']') 
+                FROM emails e 
+                JOIN config_emails ce ON ce.id_emails = e.id 
+                WHERE ce.id_config = c.id AND e.status = 1
+            ), 
+            '[]'
+        ) AS related_emails 
+    FROM config c 
+    WHERE c.id = :id_config 
+    GROUP BY c.id, c.pages_number, c.contact_number, c.author, config_email, c.url, c.comment, c.subject, c.message;
+    ''')
+
+    params = {"id_config": id}
+
+    result = connection.execute(query, params).fetchall()
+
+    return {"error": False, "msg": result}
 
 @config.post("/create_email_config", dependencies=[Depends(JWTBearer())])
 async def create_config(request: Emails):
